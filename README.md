@@ -1,0 +1,1 @@
+Courses link: http://ai.berkeley.edu/course_schedule.html
