@@ -98,7 +98,7 @@ def depthFirstSearch(problem):
     
     fringe = util.PriorityQueueWithFunction(lambda x: -len(x[0]))
     start = problem.getStartState()
-    closedSet = set([start])
+    exploredList = [start]
 
     for next_state, action, _ in problem.getSuccessors(start):
         entry = ([action], next_state)
@@ -107,8 +107,8 @@ def depthFirstSearch(problem):
     while not fringe.isEmpty():
         actions, dest = fringe.pop()
         if (problem.isGoalState(dest)): return actions
-        if dest not in closedSet:
-            closedSet.add(dest)
+        if dest not in exploredList:
+            exploredList.append(dest)
             next_successor = problem.getSuccessors(dest)
             # print next_successor
             if (not len(next_successor) == 0):
@@ -121,6 +121,7 @@ def depthFirstSearch(problem):
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
+
     from game import Directions
     import itertools
     import util
@@ -132,7 +133,7 @@ def breadthFirstSearch(problem):
 
     fringe = util.PriorityQueueWithFunction(lambda x: len(x[0]))
     start = problem.getStartState()
-    closedSet = set([start])
+    exploredList = [start]
 
     for next_state, action, _ in problem.getSuccessors(start):
         entry = ([action], next_state)
@@ -141,8 +142,8 @@ def breadthFirstSearch(problem):
     while not fringe.isEmpty():
         actions, dest = fringe.pop()
         if (problem.isGoalState(dest)): return actions
-        if dest not in closedSet:
-            closedSet.add(dest)
+        if dest not in exploredList:
+            exploredList.append(dest)
             next_successor = problem.getSuccessors(dest)
             # print next_successor
             if (not len(next_successor) == 0):
@@ -155,7 +156,37 @@ def breadthFirstSearch(problem):
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    from game import Directions
+    import itertools
+    import util
+
+    s = Directions.SOUTH
+    w = Directions.WEST
+    e = Directions.EAST
+    n = Directions.NORTH
+
+    fringe = util.PriorityQueueWithFunction(lambda item: item[2])
+    start = problem.getStartState()
+    exploredList = [start]
+
+    for next_state, action, cost in problem.getSuccessors(start):
+        entry = ([action], next_state, cost)
+        fringe.push(entry)
+
+    while not fringe.isEmpty():
+        actions, dest, pathCost = fringe.pop()
+        if (problem.isGoalState(dest)): return actions
+        if dest not in exploredList:
+            exploredList.append(dest)
+            next_successor = problem.getSuccessors(dest)
+            # print next_successor
+            if (not len(next_successor) == 0):
+                for next_state, action, cost in next_successor:
+                    entry = (actions + [action], next_state, pathCost + cost)
+                    # print entry
+                    fringe.push(entry)
+    return []
+
 
 def nullHeuristic(state, problem=None):
     """
@@ -167,7 +198,36 @@ def nullHeuristic(state, problem=None):
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    from game import Directions
+    import itertools
+    import util
+
+    s = Directions.SOUTH
+    w = Directions.WEST
+    e = Directions.EAST
+    n = Directions.NORTH
+
+    fringe = util.PriorityQueueWithFunction(lambda item: item[2] + item[3])
+    start = problem.getStartState()
+    exploredList = [start]
+
+    for next_state, action, cost in problem.getSuccessors(start):
+        entry = ([action], next_state, cost, heuristic(start, problem))
+        fringe.push(entry)
+
+    while not fringe.isEmpty():
+        actions, dest, pathCost, _ = fringe.pop()
+        if (problem.isGoalState(dest)): return actions
+        if dest not in exploredList:
+            exploredList.append(dest)
+            next_successor = problem.getSuccessors(dest)
+            # print next_successor
+            if (not len(next_successor) == 0):
+                for next_state, action, cost in next_successor:
+                    entry = (actions + [action], next_state, pathCost + cost, heuristic(dest, problem))
+                    # print entry
+                    fringe.push(entry)
+    return []
 
 
 # Abbreviations
