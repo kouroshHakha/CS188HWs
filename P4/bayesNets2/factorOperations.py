@@ -101,8 +101,24 @@ def joinFactors(factors):
 
 
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
 
+    conditionedSet = [set(factor.conditionedVariables()) for factor in factors]
+    unconditionedSet = [set(factor.unconditionedVariables()) for factor in factors]
+
+    conditionedSet = reduce(lambda x,y: x.union(y), conditionedSet)
+    unconditionedSet = reduce(lambda x,y: x.union(y), unconditionedSet)
+    conditionedSet.difference_update(unconditionedSet)
+
+    overallFactor = Factor(unconditionedSet, conditionedSet, factors[0].variableDomainsDict())
+
+    for assignment in overallFactor.getAllPossibleAssignmentDicts():
+        prob = 1
+        for factor in factors:
+            prob *= factor.getProbability(assignment)
+
+        overallFactor.setProbability(assignment, prob)
+
+    return overallFactor
 
 def eliminateWithCallTracking(callTrackingList=None):
 
@@ -150,8 +166,24 @@ def eliminateWithCallTracking(callTrackingList=None):
                     "unconditionedVariables: " + str(factor.unconditionedVariables()))
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        conditionedSet = set(factor.conditionedVariables())
+        unconditionedSet = set(factor.unconditionedVariables())
+        unconditionedSet.difference_update(set([eliminationVariable]))
 
+        variableDomainsDic = factor.variableDomainsDict()
+        newFactor = Factor(unconditionedSet, conditionedSet, variableDomainsDic)
+        prob = 0
+        for assignment in newFactor.getAllPossibleAssignmentDicts():
+            oldAssignment = assignment.copy()
+            for eliminationVal in variableDomainsDic[eliminationVariable]:
+                oldAssignment[eliminationVariable] = eliminationVal
+                prob += factor.getProbability(oldAssignment)
+
+            newFactor.setProbability(assignment, prob)
+            prob = 0
+
+
+        return newFactor
     return eliminate
 
 eliminate = eliminateWithCallTracking()
@@ -159,18 +191,18 @@ eliminate = eliminateWithCallTracking()
 
 def normalize(factor):
     """
-    Question 5: Your normalize implementation 
+    Question 5: Your normalize implementation
 
     Input factor is a single factor.
 
-    The set of conditioned variables for the normalized factor consists 
-    of the input factor's conditioned variables as well as any of the 
-    input factor's unconditioned variables with exactly one entry in their 
-    domain.  Since there is only one entry in that variable's domain, we 
-    can either assume it was assigned as evidence to have only one variable 
+    The set of conditioned variables for the normalized factor consists
+    of the input factor's conditioned variables as well as any of the
+    input factor's unconditioned variables with exactly one entry in their
+    domain.  Since there is only one entry in that variable's domain, we
+    can either assume it was assigned as evidence to have only one variable
     in its domain, or it only had one entry in its domain to begin with.
-    This blurs the distinction between evidence assignments and variables 
-    with single value domains, but that is alright since we have to assign 
+    This blurs the distinction between evidence assignments and variables
+    with single value domains, but that is alright since we have to assign
     variables that only have one value in their domain to that single value.
 
     Return a new factor where the sum of the all the probabilities in the table is 1.
@@ -180,9 +212,9 @@ def normalize(factor):
     you should return None.
 
     This is intended to be used at the end of a probabilistic inference query.
-    Because of this, all variables that have more than one element in their 
+    Because of this, all variables that have more than one element in their
     domain are assumed to be unconditioned.
-    There are more general implementations of normalize, but we will only 
+    There are more general implementations of normalize, but we will only
     implement this version.
 
     Useful functions:
@@ -201,9 +233,30 @@ def normalize(factor):
             print "Factor failed normalize typecheck: ", factor
             raise ValueError, ("The factor to be normalized must have only one " + \
                             "assignment of the \n" + "conditional variables, " + \
-                            "so that total probability will sum to 1\n" + 
+                            "so that total probability will sum to 1\n" +
                             str(factor))
 
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    conditionedSet = set(factor.conditionedVariables())
+    unconditionedSet = set(factor.unconditionedVariables())
+    variableDomainsDic = dict(factor.variableDomainsDict())
 
+    summation = sum([factor.getProbability(assignment) for assignment in factor.getAllPossibleAssignmentDicts()])
+    if summation == 0:
+        return None
+
+    variablesWithOneDomain = []
+    for var in unconditionedSet:
+        if len(variableDomainsDic[var]) == 1:
+            variablesWithOneDomain.append(var)
+
+    setOfVarsWithOneDomain = set(variablesWithOneDomain)
+    unconditionedSet.difference_update(setOfVarsWithOneDomain)
+    conditionedSet.update(setOfVarsWithOneDomain)
+
+    newFactor = Factor(unconditionedSet, conditionedSet, variableDomainsDic)
+
+    for assignment in factor.getAllPossibleAssignmentDicts():
+        newFactor.setProbability(assignment, factor.getProbability(assignment) / summation)
+
+    return newFactor
